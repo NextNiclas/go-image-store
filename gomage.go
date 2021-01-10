@@ -17,6 +17,7 @@ func main() {
 	log.Println("Starting Gomage...")
 	storage.SetInstance(storage.NewFileSystemDriver("./data/meta", "./data/content"))
 	router := mux.NewRouter()
+	router.Use(corsMiddlewareFunc)
 	router.HandleFunc("/media/{id}", api.GetFile).Methods("GET")
 	router.HandleFunc("/raw/{id}", api.GetFileRaw).Methods("GET")
 	router.HandleFunc("/media", api.PostFile).Methods("POST")
@@ -42,11 +43,11 @@ func main() {
 	}()
 	<-c
 }
-func corsWrapper(f func(*http.Request, http.ResponseWriter)) func(*http.Request, http.ResponseWriter) {
-	return func(r *http.Request, w http.ResponseWriter) {
+func corsMiddlewareFunc(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cors(r, w)
-		f(r, w)
-	}
+		next.ServeHTTP(w, r)
+	})
 }
 func cors(r *http.Request, w http.ResponseWriter) {
 	ua := r.Header.Get("Origin")
