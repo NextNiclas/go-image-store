@@ -42,19 +42,25 @@ func main() {
 	}()
 	<-c
 }
-func cors(r *http.Request, w *http.ResponseWriter) {
+func corsWrapper(f func(*http.Request, http.ResponseWriter)) func(*http.Request, http.ResponseWriter) {
+	return func(r *http.Request, w http.ResponseWriter) {
+		cors(r, w)
+		f(r, w)
+	}
+}
+func cors(r *http.Request, w http.ResponseWriter) {
 	ua := r.Header.Get("Origin")
 	// Fck CORS Mode :D
 	if ua == "" {
 		ua = "*"
 	}
 
-	(*w).Header().Set("Access-Control-Allow-Origin", ua)
-	(*w).Header().Set("Access-Control-Expose-Headers", "x-csrf-token")
-	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	w.Header().Set("Access-Control-Allow-Origin", ua)
+	w.Header().Set("Access-Control-Expose-Headers", "x-csrf-token")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
 func optionsHandler(w http.ResponseWriter, r *http.Request) {
-	cors(r, &w)
+	cors(r, w)
 }
